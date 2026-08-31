@@ -13,6 +13,7 @@
 
 #include "IPlug_include_in_plug_hdr.h"
 #include "ISender.h"
+#include "Smoothers.h"
 
 
 const int kNumPresets = 1;
@@ -221,6 +222,10 @@ private:
   // Exists so that we don't try to use a DSP module that's only
   // partially-instantiated.
   void _ApplyDSPStaging();
+  // Mix the calibrated clean input with the fully processed NAM path.
+  // Writes the result to mOutputArray and returns mOutputPointers.
+  iplug::sample** _BlendCleanAndProcessed(iplug::sample** processed, const size_t numChannels,
+                                          const size_t numFrames);
   // Deallocates mInputPointers and mOutputPointers
   void _DeallocateIOPointers();
   // Fallback that just copies inputs to outputs if mDSP doesn't hold a model.
@@ -290,6 +295,9 @@ private:
   // Input and output gain
   double mInputGain = 1.0;
   double mOutputGain = 1.0;
+
+  // Smooth the clean/processed crossfade to avoid clicks during automation.
+  iplug::LogParamSmooth<iplug::sample, 1> mCleanBlendSmoother{10.0, 1.0};
 
   // Noise gates
   dsp::noise_gate::Trigger mNoiseGateTrigger;

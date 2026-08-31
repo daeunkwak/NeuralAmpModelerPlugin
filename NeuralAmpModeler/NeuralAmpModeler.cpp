@@ -376,14 +376,16 @@ void NeuralAmpModeler::ProcessBlock(iplug::sample** inputs, iplug::sample** outp
   if (mIR != nullptr && GetParam(kIRToggle)->Value())
     irPointers = mIR->Process(toneStackOutPointers, numChannelsInternal, numFrames);
 
-  // And the HPF for DC offset (Issue 271)
+  sample** blendedPointers = _BlendCleanAndProcessed(irPointers, numChannelsInternal, numFrames);
+
+  // Apply the HPF after blending so that it removes DC from both paths (Issue 271).
   const double highPassCutoffFreq = kDCBlockerFrequency;
   // const double lowPassCutoffFreq = 20000.0;
   const recursive_linear_filter::HighPassParams highPassParams(sampleRate, highPassCutoffFreq);
   // const recursive_linear_filter::LowPassParams lowPassParams(sampleRate, lowPassCutoffFreq);
   mHighPass.SetParams(highPassParams);
   // mLowPass.SetParams(lowPassParams);
-  sample** hpfPointers = mHighPass.Process(irPointers, numChannelsInternal, numFrames);
+  sample** hpfPointers = mHighPass.Process(blendedPointers, numChannelsInternal, numFrames);
   // sample** lpfPointers = mLowPass.Process(hpfPointers, numChannelsInternal, numFrames);
 
   // restore previous floating point state
@@ -410,6 +412,8 @@ void NeuralAmpModeler::OnReset()
   SetTailSize(tailCycles * (int)(sampleRate / kDCBlockerFrequency));
   mInputSender.Reset(sampleRate);
   mOutputSender.Reset(sampleRate);
+  mCleanBlendSmoother.SetSmoothTime(10.0, sampleRate);
+  mCleanBlendSmoother.SetValue(GetParam(kCleanBlend)->Value() / 100.0);
   // If there is a model or IR loaded, they need to be checked for resampling.
   _ResetModelAndIR(sampleRate, GetBlockSize());
   mToneStack->Reset(sampleRate, maxBlockSize);
@@ -627,6 +631,23 @@ void NeuralAmpModeler::_ApplyDSPStaging()
     mIR = std::move(mStagedIR);
     mStagedIR = nullptr;
   }
+}
+
+sample** NeuralAmpModeler::_BlendCleanAndProcessed(sample** processed, const size_t numChannels,
+                                                   const size_t numFrames)
+{
+  const sample targetProcessedGain = static_cast<sample>(GetParam(kCleanBlend)->Value() / 100.0);
+
+  for (size_t s = 0; s < numFrames; s++)
+  {
+    const sample processedGain = mCleanBlendSmoother.Process(targetProcessedGain);
+    const sample cleanGain = 1.0 - processedGain;
+
+    for (size_t c = 0; c < numChannels; c++)
+      mOutputArray[c][s] = cleanGain * mInputPointers[c][s] + processedGain * processed[c][s];
+  }
+
+  return mOutputPointers;
 }
 
 void NeuralAmpModeler::_DeallocateIOPointers()
