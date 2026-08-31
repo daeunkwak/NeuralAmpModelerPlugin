@@ -47,6 +47,7 @@ enum EParams
   kInputCalibrationLevel,
   kOutputMode,
   kSlim,
+  kCleanBlend,
   kNumParams
 };
 

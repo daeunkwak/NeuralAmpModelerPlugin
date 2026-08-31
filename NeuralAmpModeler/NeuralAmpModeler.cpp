@@ -94,6 +94,7 @@ NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
   GetParam(kInputCalibrationLevel)
     ->InitDouble(kInputCalibrationLevelParamName.c_str(), kDefaultInputCalibrationLevel, -60.0, 60.0, 0.1, "dBu");
   GetParam(kSlim)->InitDouble("Slim", 0.0, 0.0, 1.0, 0.01);
+  GetParam(kCleanBlend)->InitPercentage("Blend", 100.0);
 
   mNoiseGateTrigger.AddListener(&mNoiseGateGain);
 
