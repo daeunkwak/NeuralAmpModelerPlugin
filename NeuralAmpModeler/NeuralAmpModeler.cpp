@@ -148,6 +148,8 @@ NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
     const auto knobsPad = 20.0f;
     const auto knobsExtraSpaceBelowTitle = 25.0f;
     const auto singleKnobPad = -2.0f;
+    const int blendKnobColumn = 5;
+    const int outputKnobColumn = 6;
     const auto knobsArea = contentArea.GetFromTop(NAM_KNOB_HEIGHT)
                              .GetReducedFromLeft(knobsPad)
                              .GetReducedFromRight(knobsPad)
@@ -157,7 +159,8 @@ NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
     const auto bassKnobArea = knobsArea.GetGridCell(0, kToneBass, 1, numKnobs).GetPadded(-singleKnobPad);
     const auto midKnobArea = knobsArea.GetGridCell(0, kToneMid, 1, numKnobs).GetPadded(-singleKnobPad);
     const auto trebleKnobArea = knobsArea.GetGridCell(0, kToneTreble, 1, numKnobs).GetPadded(-singleKnobPad);
-    const auto outputKnobArea = knobsArea.GetGridCell(0, kOutputLevel, 1, numKnobs).GetPadded(-singleKnobPad);
+    const auto blendKnobArea = knobsArea.GetGridCell(0, blendKnobColumn, 1, numKnobs).GetPadded(-singleKnobPad);
+    const auto outputKnobArea = knobsArea.GetGridCell(0, outputKnobColumn, 1, numKnobs).GetPadded(-singleKnobPad);
 
     const auto ngToggleArea =
       noiseGateArea.GetVShifted(noiseGateArea.H()).SubRectVertical(2, 0).GetReducedFromTop(10.0f);
@@ -278,6 +281,7 @@ NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
       new NAMKnobControl(midKnobArea, kToneMid, "", style, knobBackgroundBitmap), -1, "EQ_KNOBS");
     pGraphics->AttachControl(
       new NAMKnobControl(trebleKnobArea, kToneTreble, "", style, knobBackgroundBitmap), -1, "EQ_KNOBS");
+    pGraphics->AttachControl(new NAMKnobControl(blendKnobArea, kCleanBlend, "Blend", style, knobBackgroundBitmap));
     pGraphics->AttachControl(new NAMKnobControl(outputKnobArea, kOutputLevel, "", style, knobBackgroundBitmap));
 
     // The meters
@@ -334,9 +338,10 @@ void NeuralAmpModeler::ProcessBlock(iplug::sample** inputs, iplug::sample** outp
   disable_denormals();
 
   _PrepareBuffers(numChannelsInternal, numFrames);
+  // Install the model before calculating this block's calibrated input.
+  _ApplyDSPStaging();
   // Input is collapsed to mono in preparation for the NAM.
   _ProcessInput(inputs, numFrames, numChannelsExternalIn, numChannelsInternal);
-  _ApplyDSPStaging();
   const bool noiseGateActive = GetParam(kNoiseGateActive)->Value();
   const bool toneStackActive = GetParam(kEQActive)->Value();
 
@@ -376,7 +381,8 @@ void NeuralAmpModeler::ProcessBlock(iplug::sample** inputs, iplug::sample** outp
   if (mIR != nullptr && GetParam(kIRToggle)->Value())
     irPointers = mIR->Process(toneStackOutPointers, numChannelsInternal, numFrames);
 
-  sample** blendedPointers = _BlendCleanAndProcessed(irPointers, numChannelsInternal, numFrames);
+  sample** blendedPointers =
+    _BlendCleanAndProcessed(inputs, numChannelsExternalIn, irPointers, numChannelsInternal, numFrames);
 
   // Apply the HPF after blending so that it removes DC from both paths (Issue 271).
   const double highPassCutoffFreq = kDCBlockerFrequency;
@@ -516,8 +522,11 @@ void NeuralAmpModeler::OnParamChange(int paramIdx)
   switch (paramIdx)
   {
     // Changes to the input gain
-    case kCalibrateInput:
     case kInputCalibrationLevel:
+      _SetInputGain();
+      _SetOutputGain(); // Calibrated output also depends on the interface reference level.
+      break;
+    case kCalibrateInput:
     case kInputLevel: _SetInputGain(); break;
     // Changes to the output gain
     case kOutputLevel:
@@ -633,18 +642,29 @@ void NeuralAmpModeler::_ApplyDSPStaging()
   }
 }
 
-sample** NeuralAmpModeler::_BlendCleanAndProcessed(sample** processed, const size_t numChannels,
+sample** NeuralAmpModeler::_BlendCleanAndProcessed(sample** inputs, const size_t nChansIn,
+                                                   sample** processed, const size_t numChannels,
                                                    const size_t numFrames)
 {
   const sample targetProcessedGain = static_cast<sample>(GetParam(kCleanBlend)->Value() / 100.0);
+  double inputGain = mCleanInputGain;
+#ifndef APP_API
+  // Match _ProcessInput's channel averaging, without model calibration.
+  if (nChansIn > 0)
+    inputGain /= static_cast<double>(nChansIn);
+#endif
 
   for (size_t s = 0; s < numFrames; s++)
   {
+    sample clean = 0.0;
+    for (size_t c = 0; c < nChansIn; c++)
+      clean += inputGain * inputs[c][s];
+
     const sample processedGain = mCleanBlendSmoother.Process(targetProcessedGain);
     const sample cleanGain = 1.0 - processedGain;
 
     for (size_t c = 0; c < numChannels; c++)
-      mOutputArray[c][s] = cleanGain * mInputPointers[c][s] + processedGain * processed[c][s];
+      mOutputArray[c][s] = cleanGain * clean + processedGain * mModelOutputGain * processed[c][s];
   }
 
   return mOutputPointers;
@@ -712,6 +732,7 @@ void NeuralAmpModeler::_ResetModelAndIR(const double sampleRate, const int maxBl
 void NeuralAmpModeler::_SetInputGain()
 {
   iplug::sample inputGainDB = GetParam(kInputLevel)->Value();
+  mCleanInputGain = DBToAmp(inputGainDB);
   // Input calibration
   if ((mModel != nullptr) && (mModel->HasInputLevel()) && GetParam(kCalibrateInput)->Bool())
   {
@@ -722,7 +743,8 @@ void NeuralAmpModeler::_SetInputGain()
 
 void NeuralAmpModeler::_SetOutputGain()
 {
-  double gainDB = GetParam(kOutputLevel)->Value();
+  mOutputGain = DBToAmp(GetParam(kOutputLevel)->Value());
+  double gainDB = 0.0;
   if (mModel != nullptr)
   {
     const int outputMode = GetParam(kOutputMode)->Int();
@@ -748,7 +770,7 @@ void NeuralAmpModeler::_SetOutputGain()
       default: break;
     }
   }
-  mOutputGain = DBToAmp(gainDB);
+  mModelOutputGain = DBToAmp(gainDB);
 }
 
 void NeuralAmpModeler::_ApplySlimParamToLoadedNAMs()

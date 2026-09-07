@@ -52,7 +52,7 @@ enum EParams
   kNumParams
 };
 
-const int numKnobs = 6;
+const int numKnobs = 7;
 
 enum ECtrlTags
 {
@@ -222,9 +222,11 @@ private:
   // Exists so that we don't try to use a DSP module that's only
   // partially-instantiated.
   void _ApplyDSPStaging();
-  // Mix the calibrated clean input with the fully processed NAM path.
+  // Mix host input (user Input gain only) with the model-level-corrected NAM path.
+  // Host buffers are read before _ProcessOutput writes to the external outputs.
   // Writes the result to mOutputArray and returns mOutputPointers.
-  iplug::sample** _BlendCleanAndProcessed(iplug::sample** processed, const size_t numChannels,
+  iplug::sample** _BlendCleanAndProcessed(iplug::sample** inputs, const size_t nChansIn,
+                                          iplug::sample** processed, const size_t numChannels,
                                           const size_t numFrames);
   // Deallocates mInputPointers and mOutputPointers
   void _DeallocateIOPointers();
@@ -292,9 +294,12 @@ private:
   iplug::sample** mInputPointers = nullptr;
   iplug::sample** mOutputPointers = nullptr;
 
-  // Input and output gain
+  // NAM input includes model calibration; clean input includes only the user Input gain.
   double mInputGain = 1.0;
+  double mCleanInputGain = 1.0;
+  // User Output gain is common; model normalization/calibration is wet-only.
   double mOutputGain = 1.0;
+  double mModelOutputGain = 1.0;
 
   // Smooth the clean/processed crossfade to avoid clicks during automation.
   iplug::LogParamSmooth<iplug::sample, 1> mCleanBlendSmoother{10.0, 1.0};
