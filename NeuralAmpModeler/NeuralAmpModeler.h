@@ -8,6 +8,7 @@
 #include "../NeuralAmpModelerCore/NAM/dsp.h"
 #include "../NeuralAmpModelerCore/NAM/slimmable.h"
 
+#include "BassDSP/SampleDelay.h"
 #include "Colors.h"
 #include "ToneStack.h"
 
@@ -303,6 +304,8 @@ private:
 
   // Smooth the clean/processed crossfade to avoid clicks during automation.
   iplug::LogParamSmooth<iplug::sample, 1> mCleanBlendSmoother{10.0, 1.0};
+  // Match the clean path to the latency reported by NAM sample-rate conversion.
+  bass_nam::SampleDelay<iplug::sample> mCleanDelay;
 
   // Noise gates
   dsp::noise_gate::Trigger mNoiseGateTrigger;

@@ -659,6 +659,7 @@ sample** NeuralAmpModeler::_BlendCleanAndProcessed(sample** inputs, const size_t
     sample clean = 0.0;
     for (size_t c = 0; c < nChansIn; c++)
       clean += inputGain * inputs[c][s];
+    clean = mCleanDelay.Process(clean);
 
     const sample processedGain = mCleanBlendSmoother.Process(targetProcessedGain);
     const sample cleanGain = 1.0 - processedGain;
@@ -1015,6 +1016,11 @@ void NeuralAmpModeler::_UpdateLatency()
     latency += mModel->GetLatency();
   }
   // Other things that add latency here...
+
+  // The host compensates for the reported latency around the whole plugin.
+  // Delay the internal clean path by the same reported sample count before
+  // blending it with the resampled NAM path.
+  mCleanDelay.SetDelaySamples(static_cast<size_t>(latency));
 
   // Feels weird to have to do this.
   if (GetLatency() != latency)
