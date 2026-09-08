@@ -1,4 +1,5 @@
 #include <algorithm> // std::clamp, std::min
+#include <cassert>
 #include <cmath> // pow
 #include <filesystem>
 #include <iostream>
@@ -1020,7 +1021,9 @@ void NeuralAmpModeler::_UpdateLatency()
   // The host compensates for the reported latency around the whole plugin.
   // Delay the internal clean path by the same reported sample count before
   // blending it with the resampled NAM path.
-  mCleanDelay.SetDelaySamples(static_cast<size_t>(latency));
+  const bool cleanDelayConfigured = mCleanDelay.SetDelaySamples(static_cast<size_t>(latency));
+  assert(cleanDelayConfigured && "NAM latency exceeds the clean delay capacity");
+  (void)cleanDelayConfigured;
 
   // Feels weird to have to do this.
   if (GetLatency() != latency)

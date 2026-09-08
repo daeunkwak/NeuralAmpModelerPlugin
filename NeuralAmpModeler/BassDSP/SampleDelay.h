@@ -1,45 +1,59 @@
 #pragma once
 
-#include <algorithm>
+#include <array>
 #include <cstddef>
-#include <vector>
 
 namespace bass_nam
 {
 
 // A fixed, integer-sample delay used to align parallel signal paths.
-template <typename T>
+template <typename T, size_t Capacity = 4096>
 class SampleDelay
 {
 public:
-  void SetDelaySamples(const size_t delaySamples)
+  // This only updates scalar state, so it is safe to call from the audio thread.
+  // Returns false when the requested delay exceeds the fixed buffer capacity.
+  bool SetDelaySamples(const size_t delaySamples)
   {
-    mBuffer.resize(delaySamples);
-    Clear();
+    const bool withinCapacity = delaySamples <= Capacity;
+    mDelaySamples = withinCapacity ? delaySamples : Capacity;
+    mWriteIndex = 0;
+    mSamplesUntilReady = mDelaySamples;
+    return withinCapacity;
   }
 
   void Clear()
   {
-    std::fill(mBuffer.begin(), mBuffer.end(), T{});
     mWriteIndex = 0;
+    // Suppress reads until every active slot has been overwritten with new audio.
+    mSamplesUntilReady = mDelaySamples;
   }
 
   T Process(const T input)
   {
-    if (mBuffer.empty())
+    if (mDelaySamples == 0)
       return input;
 
-    const T output = mBuffer[mWriteIndex];
+    T output{};
+    if (mSamplesUntilReady == 0)
+      output = mBuffer[mWriteIndex];
+    else
+      --mSamplesUntilReady;
+
     mBuffer[mWriteIndex] = input;
-    mWriteIndex = (mWriteIndex + 1) % mBuffer.size();
+    if (++mWriteIndex == mDelaySamples)
+      mWriteIndex = 0;
     return output;
   }
 
-  size_t GetDelaySamples() const { return mBuffer.size(); }
+  size_t GetDelaySamples() const { return mDelaySamples; }
+  static constexpr size_t GetCapacity() { return Capacity; }
 
 private:
-  std::vector<T> mBuffer;
+  std::array<T, Capacity> mBuffer{};
+  size_t mDelaySamples = 0;
   size_t mWriteIndex = 0;
+  size_t mSamplesUntilReady = 0;
 };
 
 } // namespace bass_nam
