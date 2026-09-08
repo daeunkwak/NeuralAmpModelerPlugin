@@ -96,6 +96,8 @@ NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
     ->InitDouble(kInputCalibrationLevelParamName.c_str(), kDefaultInputCalibrationLevel, -60.0, 60.0, 0.1, "dBu");
   GetParam(kSlim)->InitDouble("Slim", 0.0, 0.0, 1.0, 0.01);
   GetParam(kCleanBlend)->InitPercentage("Blend", 100.0);
+  GetParam(kCrossoverEnabled)->InitBool("CrossoverEnabled", false);
+  GetParam(kCrossoverFrequency)->InitFrequency("CrossoverFrequency", 150.0, 60.0, 500.0, 1.0);
 
   mNoiseGateTrigger.AddListener(&mNoiseGateGain);
 
@@ -150,7 +152,8 @@ NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
     const auto knobsExtraSpaceBelowTitle = 25.0f;
     const auto singleKnobPad = -2.0f;
     const int blendKnobColumn = 5;
-    const int outputKnobColumn = 6;
+    const int crossoverKnobColumn = 6;
+    const int outputKnobColumn = 7;
     const auto knobsArea = contentArea.GetFromTop(NAM_KNOB_HEIGHT)
                              .GetReducedFromLeft(knobsPad)
                              .GetReducedFromRight(knobsPad)
@@ -162,6 +165,9 @@ NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
     const auto trebleKnobArea = knobsArea.GetGridCell(0, kToneTreble, 1, numKnobs).GetPadded(-singleKnobPad);
     const auto blendKnobArea = knobsArea.GetGridCell(0, blendKnobColumn, 1, numKnobs).GetPadded(-singleKnobPad);
     const auto outputKnobArea = knobsArea.GetGridCell(0, outputKnobColumn, 1, numKnobs).GetPadded(-singleKnobPad);
+    const auto crossoverKnobArea = knobsArea.GetGridCell(0, crossoverKnobColumn, 1, numKnobs).GetPadded(-singleKnobPad);
+    const auto crossoverToggleArea =
+      crossoverKnobArea.GetVShifted(crossoverKnobArea.H()).SubRectVertical(2, 0).GetReducedFromTop(10.0f);
 
     const auto ngToggleArea =
       noiseGateArea.GetVShifted(noiseGateArea.H()).SubRectVertical(2, 0).GetReducedFromTop(10.0f);
@@ -283,6 +289,12 @@ NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
     pGraphics->AttachControl(
       new NAMKnobControl(trebleKnobArea, kToneTreble, "", style, knobBackgroundBitmap), -1, "EQ_KNOBS");
     pGraphics->AttachControl(new NAMKnobControl(blendKnobArea, kCleanBlend, "Blend", style, knobBackgroundBitmap));
+    pGraphics
+      ->AttachControl(
+        new NAMKnobControl(crossoverKnobArea, kCrossoverFrequency, "Split Hz", style, knobBackgroundBitmap))
+      ->SetDisabled(!GetParam(kCrossoverEnabled)->Bool());
+    pGraphics->AttachControl(
+      new NAMSwitchControl(crossoverToggleArea, kCrossoverEnabled, "Split", style, switchHandleBitmap));
     pGraphics->AttachControl(new NAMKnobControl(outputKnobArea, kOutputLevel, "", style, knobBackgroundBitmap));
 
     // The meters
@@ -321,9 +333,7 @@ NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
 }
 
 NeuralAmpModeler::~NeuralAmpModeler()
-{
-  _DeallocateIOPointers();
-}
+{ _DeallocateIOPointers(); }
 
 void NeuralAmpModeler::ProcessBlock(iplug::sample** inputs, iplug::sample** outputs, int nFrames)
 {
@@ -421,6 +431,8 @@ void NeuralAmpModeler::OnReset()
   mOutputSender.Reset(sampleRate);
   mCleanBlendSmoother.SetSmoothTime(10.0, sampleRate);
   mCleanBlendSmoother.SetValue(GetParam(kCleanBlend)->Value() / 100.0);
+  for (auto& crossover : mCrossover)
+    crossover.Reset(sampleRate, GetParam(kCrossoverFrequency)->Value(), GetParam(kCrossoverEnabled)->Bool());
   // If there is a model or IR loaded, they need to be checked for resampling.
   _ResetModelAndIR(sampleRate, GetBlockSize());
   mToneStack->Reset(sampleRate, maxBlockSize);
@@ -554,6 +566,10 @@ void NeuralAmpModeler::OnParamChangeUI(int paramIdx, EParamSource source)
         pGraphics->ForControlInGroup("EQ_KNOBS", [active](IControl* pControl) { pControl->SetDisabled(!active); });
         break;
       case kIRToggle: pGraphics->GetControlWithTag(kCtrlTagIRFileBrowser)->SetDisabled(!active); break;
+      case kCrossoverEnabled:
+        if (auto* control = pGraphics->GetControlWithParamIdx(kCrossoverFrequency))
+          control->SetDisabled(!active);
+        break;
       default: break;
     }
   }
@@ -643,11 +659,13 @@ void NeuralAmpModeler::_ApplyDSPStaging()
   }
 }
 
-sample** NeuralAmpModeler::_BlendCleanAndProcessed(sample** inputs, const size_t nChansIn,
-                                                   sample** processed, const size_t numChannels,
-                                                   const size_t numFrames)
+sample** NeuralAmpModeler::_BlendCleanAndProcessed(sample** inputs, const size_t nChansIn, sample** processed,
+                                                   const size_t numChannels, const size_t numFrames)
 {
   const sample targetProcessedGain = static_cast<sample>(GetParam(kCleanBlend)->Value() / 100.0);
+  const bool crossoverEnabled = GetParam(kCrossoverEnabled)->Bool();
+  for (auto& crossover : mCrossover)
+    crossover.SetFrequency(GetParam(kCrossoverFrequency)->Value());
   double inputGain = mCleanInputGain;
 #ifndef APP_API
   // Match _ProcessInput's channel averaging, without model calibration.
@@ -666,7 +684,8 @@ sample** NeuralAmpModeler::_BlendCleanAndProcessed(sample** inputs, const size_t
     const sample cleanGain = 1.0 - processedGain;
 
     for (size_t c = 0; c < numChannels; c++)
-      mOutputArray[c][s] = cleanGain * clean + processedGain * mModelOutputGain * processed[c][s];
+      mOutputArray[c][s] =
+        mCrossover[c].Process(clean, processed[c][s], cleanGain, processedGain * mModelOutputGain, crossoverEnabled);
   }
 
   return mOutputPointers;
@@ -1024,6 +1043,8 @@ void NeuralAmpModeler::_UpdateLatency()
   const bool cleanDelayConfigured = mCleanDelay.SetDelaySamples(static_cast<size_t>(latency));
   assert(cleanDelayConfigured && "NAM latency exceeds the clean delay capacity");
   (void)cleanDelayConfigured;
+  for (auto& crossover : mCrossover)
+    crossover.Clear();
 
   // Feels weird to have to do this.
   if (GetLatency() != latency)
