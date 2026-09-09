@@ -1,5 +1,13 @@
 # Bass DSP checks
 
+Before running the tests in a fresh clone, initialize the submodules from the
+repository root. The state compatibility test requires iPlug2 and the NAM Core
+dependencies:
+
+```sh
+git submodule update --init --recursive
+```
+
 Run from the repository root (Clang with AddressSanitizer/UndefinedBehaviorSanitizer):
 
 ```sh
