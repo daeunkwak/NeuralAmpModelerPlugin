@@ -9,6 +9,7 @@
 #include "../NeuralAmpModelerCore/NAM/slimmable.h"
 
 #include "BassDSP/SampleDelay.h"
+#include "BassDSP/Crossover.h"
 #include "Colors.h"
 #include "ToneStack.h"
 
@@ -50,10 +51,12 @@ enum EParams
   kOutputMode,
   kSlim,
   kCleanBlend,
+  kCrossoverEnabled,
+  kCrossoverFrequency,
   kNumParams
 };
 
-const int numKnobs = 7;
+const int numKnobs = 8;
 
 enum ECtrlTags
 {
@@ -177,9 +180,7 @@ public:
 
   nam::SlimmableModel* GetSlimmableModel() { return dynamic_cast<nam::SlimmableModel*>(mEncapsulated.get()); }
   const nam::SlimmableModel* GetSlimmableModel() const
-  {
-    return dynamic_cast<const nam::SlimmableModel*>(mEncapsulated.get());
-  }
+  { return dynamic_cast<const nam::SlimmableModel*>(mEncapsulated.get()); }
 
 private:
   bool NeedToResample() const { return GetExpectedSampleRate() != GetEncapsulatedSampleRate(); };
@@ -226,9 +227,8 @@ private:
   // Mix host input (user Input gain only) with the model-level-corrected NAM path.
   // Host buffers are read before _ProcessOutput writes to the external outputs.
   // Writes the result to mOutputArray and returns mOutputPointers.
-  iplug::sample** _BlendCleanAndProcessed(iplug::sample** inputs, const size_t nChansIn,
-                                          iplug::sample** processed, const size_t numChannels,
-                                          const size_t numFrames);
+  iplug::sample** _BlendCleanAndProcessed(iplug::sample** inputs, const size_t nChansIn, iplug::sample** processed,
+                                          const size_t numChannels, const size_t numFrames);
   // Deallocates mInputPointers and mOutputPointers
   void _DeallocateIOPointers();
   // Fallback that just copies inputs to outputs if mDSP doesn't hold a model.
@@ -306,6 +306,7 @@ private:
   iplug::LogParamSmooth<iplug::sample, 1> mCleanBlendSmoother{10.0, 1.0};
   // Match the clean path to the latency reported by NAM sample-rate conversion.
   bass_nam::SampleDelay<iplug::sample> mCleanDelay;
+  bass_nam::Crossover mCrossover[kNumChannelsInternal];
 
   // Noise gates
   dsp::noise_gate::Trigger mNoiseGateTrigger;

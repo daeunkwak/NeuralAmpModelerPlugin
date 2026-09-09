@@ -97,11 +97,35 @@ void _RenameKeys(nlohmann::json& j, std::unordered_map<std::string, std::string>
   }
 }
 
+// v0.8.2
+
+int _GetConfigFrom_0_8_2(const iplug::IByteChunk& chunk, int startPos, nlohmann::json& config)
+{
+  std::vector<std::string> paramNames{"Input",
+                                      "Threshold",
+                                      "Bass",
+                                      "Middle",
+                                      "Treble",
+                                      "Output",
+                                      "NoiseGateActive",
+                                      "ToneStack",
+                                      "IRToggle",
+                                      "CalibrateInput",
+                                      "InputCalibrationLevel",
+                                      "OutputMode",
+                                      "Slim",
+                                      "Blend",
+                                      "CrossoverEnabled",
+                                      "CrossoverFrequency"};
+  return _UnserializePathsAndExpectedKeys(chunk, startPos, config, paramNames);
+}
+
 // v0.8.1
 
 void _UpdateConfigFrom_0_8_1(nlohmann::json& config)
 {
-  // Fill me in once something changes!
+  config["CrossoverEnabled"] = 0.0;
+  config["CrossoverFrequency"] = 150.0;
 }
 
 int _GetConfigFrom_0_8_1(const iplug::IByteChunk& chunk, int startPos, nlohmann::json& config)
@@ -307,7 +331,11 @@ int NeuralAmpModeler::_UnserializeStateWithKnownVersion(const iplug::IByteChunk&
   _Version version(versionStr);
   // Act accordingly
   nlohmann::json config;
-  if (version >= _Version(0, 8, 1))
+  if (version >= _Version(0, 8, 2))
+  {
+    pos = _GetConfigFrom_0_8_2(chunk, pos, config);
+  }
+  else if (version >= _Version(0, 8, 1))
   {
     pos = _GetConfigFrom_0_8_1(chunk, pos, config);
   }
