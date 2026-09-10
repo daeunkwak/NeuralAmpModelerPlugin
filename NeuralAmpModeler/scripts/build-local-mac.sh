@@ -65,8 +65,8 @@ case "$target" in
 esac
 bundle="$build_dir/products/BassNAM.$extension"
 [[ -d "$bundle" ]] || { echo "Expected product missing: $bundle" >&2; exit 1; }
-codesign --force --sign - "$bundle"
-codesign --verify --strict "$bundle"
+codesign --force --deep --sign - "$bundle"
+codesign --verify --deep --strict "$bundle"
 echo "Built: $bundle"
 if [[ "$target" == APP ]]; then
   echo "Launch: open \"$bundle\""

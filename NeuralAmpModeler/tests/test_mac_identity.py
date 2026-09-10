@@ -35,6 +35,22 @@ class MacIdentityTest(unittest.TestCase):
                     self.assertEqual(component["factoryFunction"], config["AUV2_FACTORY"])
                     self.assertEqual(info["NSPrincipalClass"], config["AUV2_VIEW_CLASS_STR"])
 
+    def test_auv3_identity(self):
+        with (PROJECT / "resources/NeuralAmpModeler-macOS-AUv3-Info.plist").open("rb") as stream:
+            extension = plistlib.load(stream)
+        with (PROJECT / "resources/NeuralAmpModeler-macOS-AUv3Framework-Info.plist").open("rb") as stream:
+            framework = plistlib.load(stream)
+
+        framework_id = "com.daeunkwak.app.BassNAM.AUv3Framework"
+        self.assertEqual(extension["CFBundleIdentifier"], "com.daeunkwak.app.BassNAM.AUv3")
+        self.assertEqual(extension["NSExtension"]["NSExtensionAttributes"]["AudioComponentBundle"], framework_id)
+        self.assertEqual(framework["CFBundleIdentifier"], framework_id)
+
+    def test_windows_product_identity(self):
+        resource = (PROJECT / "resources/main.rc").read_text()
+        for key in ("FileDescription", "InternalName", "ProductName"):
+            self.assertIn(f'VALUE "{key}", "BassNAM"', resource)
+
 
 if __name__ == "__main__":
     unittest.main()
