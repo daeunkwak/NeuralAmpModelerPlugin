@@ -8,13 +8,14 @@ IPLUG2_ROOT = "../../iPlug2"
 
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 projectpath = os.path.abspath(os.path.join(scriptpath, os.pardir))
+projectname = os.path.basename(projectpath)  # Template filenames are not product names.
 
 kAudioUnitType_MusicDevice = "aumu"
 kAudioUnitType_MusicEffect = "aumf"
 kAudioUnitType_Effect = "aufx"
 kAudioUnitType_MIDIProcessor = "aumi"
 
-sys.path.insert(0, os.path.join(os.getcwd(), IPLUG2_ROOT + "/Scripts"))
+sys.path.insert(0, os.path.join(projectpath, "../iPlug2/Scripts"))
 
 from parse_config import parse_config, parse_xcconfig
 
@@ -22,7 +23,7 @@ from parse_config import parse_config, parse_xcconfig
 def main():
     config = parse_config(projectpath)
     xcconfig = parse_xcconfig(
-        os.path.join(os.getcwd(), IPLUG2_ROOT + "/../common-mac.xcconfig")
+        os.path.join(projectpath, "../common-mac.xcconfig")
     )
 
     CFBundleGetInfoString = (
@@ -41,7 +42,7 @@ def main():
 
     # VST3
 
-    plistpath = projectpath + "/resources/" + config["BUNDLE_NAME"] + "-VST3-Info.plist"
+    plistpath = projectpath + "/resources/" + projectname + "-VST3-Info.plist"
     with open(plistpath, "rb") as f:
         vst3 = plistlib.load(f)
         vst3["CFBundleExecutable"] = config["BUNDLE_NAME"]
@@ -67,7 +68,7 @@ def main():
 
     # AUDIOUNIT v2
 
-    plistpath = projectpath + "/resources/" + config["BUNDLE_NAME"] + "-AU-Info.plist"
+    plistpath = projectpath + "/resources/" + projectname + "-AU-Info.plist"
     with open(plistpath, "rb") as f:
         auv2 = plistlib.load(f)
         auv2["CFBundleExecutable"] = config["BUNDLE_NAME"]
@@ -87,6 +88,7 @@ def main():
         auv2["CFBundlePackageType"] = CFBundlePackageType
         auv2["CFBundleSignature"] = config["PLUG_UNIQUE_ID"]
         auv2["CSResourcesFileMapped"] = CSResourcesFileMapped
+        auv2["NSPrincipalClass"] = config["AUV2_VIEW_CLASS_STR"]
 
         if config["PLUG_TYPE"] == 0:
             if config["PLUG_DOES_MIDI_IN"]:
@@ -122,7 +124,7 @@ def main():
         NSEXTENSIONPOINTIDENTIFIER = "com.apple.AudioUnit"
 
     plistpath = (
-        projectpath + "/resources/" + config["BUNDLE_NAME"] + "-macOS-AUv3-Info.plist"
+        projectpath + "/resources/" + projectname + "-macOS-AUv3-Info.plist"
     )
 
     with open(plistpath, "rb") as f:
@@ -196,7 +198,7 @@ def main():
 
     # AAX
 
-    plistpath = projectpath + "/resources/" + config["BUNDLE_NAME"] + "-AAX-Info.plist"
+    plistpath = projectpath + "/resources/" + projectname + "-AAX-Info.plist"
     with open(plistpath, "rb") as f:
         aax = plistlib.load(f)
         aax["CFBundleExecutable"] = config["BUNDLE_NAME"]
@@ -221,7 +223,7 @@ def main():
     # APP
 
     plistpath = (
-        projectpath + "/resources/" + config["BUNDLE_NAME"] + "-macOS-Info.plist"
+        projectpath + "/resources/" + projectname + "-macOS-Info.plist"
     )
 
     with open(plistpath, "rb") as f:
@@ -240,11 +242,11 @@ def main():
         macOSapp["CFBundleVersion"] = CFBundleVersion
         macOSapp["CFBundleShortVersionString"] = CFBundleVersion
         macOSapp["LSMinimumSystemVersion"] = LSMinimumSystemVersion
-        macOSapp["CFBundlePackageType"] = CFBundlePackageType
+        macOSapp["CFBundlePackageType"] = "APPL"
         macOSapp["CFBundleSignature"] = config["PLUG_UNIQUE_ID"]
         macOSapp["CSResourcesFileMapped"] = CSResourcesFileMapped
         macOSapp["NSPrincipalClass"] = "SWELLApplication"
-        macOSapp["NSMainNibFile"] = config["BUNDLE_NAME"] + "-macOS-MainMenu"
+        macOSapp["NSMainNibFile"] = projectname + "-macOS-MainMenu"
         macOSapp["LSApplicationCategoryType"] = "public.app-category.music"
         macOSapp[
             "NSMicrophoneUsageDescription"

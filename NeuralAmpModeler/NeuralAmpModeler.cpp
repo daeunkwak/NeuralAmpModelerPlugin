@@ -76,7 +76,7 @@ const std::string kInputCalibrationLevelParamName = "InputCalibrationLevel";
 const double kDefaultInputCalibrationLevel = 12.0;
 
 
-NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
+BassNAM::BassNAM(const InstanceInfo& info)
 : Plugin(info, MakeConfig(kNumParams, kNumPresets))
 {
   _InitToneStack();
@@ -226,9 +226,13 @@ NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
       }
     };
 
-    pGraphics->AttachBackground(BACKGROUND_FN);
-    pGraphics->AttachControl(new IBitmapControl(b, linesBitmap));
-    pGraphics->AttachControl(new IVLabelControl(titleArea, "NEURAL AMP MODELER", titleStyle));
+    // Fit the original artwork to the wider bass control layout.
+    pGraphics->AttachControl(new ILambdaControl(b,
+      [backgroundBitmap, linesBitmap](IControl*, IGraphics& g, IRECT& bounds) {
+        g.DrawFittedBitmap(backgroundBitmap, bounds);
+        g.DrawFittedBitmap(linesBitmap, bounds);
+      }, DEFAULT_ANIMATION_DURATION, false, false, kNoParameter, true));
+    pGraphics->AttachControl(new IVLabelControl(titleArea, "BASS NAM", titleStyle));
     pGraphics->AttachControl(new ISVGControl(modelIconArea, modelIconSVG));
 
 #ifdef NAM_PICK_DIRECTORY
@@ -332,10 +336,10 @@ NeuralAmpModeler::NeuralAmpModeler(const InstanceInfo& info)
   };
 }
 
-NeuralAmpModeler::~NeuralAmpModeler()
+BassNAM::~BassNAM()
 { _DeallocateIOPointers(); }
 
-void NeuralAmpModeler::ProcessBlock(iplug::sample** inputs, iplug::sample** outputs, int nFrames)
+void BassNAM::ProcessBlock(iplug::sample** inputs, iplug::sample** outputs, int nFrames)
 {
   const size_t numChannelsExternalIn = (size_t)NInChansConnected();
   const size_t numChannelsExternalOut = (size_t)NOutChansConnected();
@@ -417,7 +421,7 @@ void NeuralAmpModeler::ProcessBlock(iplug::sample** inputs, iplug::sample** outp
   _UpdateMeters(mInputPointers, outputs, numFrames, numChannelsInternal, numChannelsExternalOut);
 }
 
-void NeuralAmpModeler::OnReset()
+void BassNAM::OnReset()
 {
   const auto sampleRate = GetSampleRate();
   const int maxBlockSize = GetBlockSize();
@@ -439,7 +443,7 @@ void NeuralAmpModeler::OnReset()
   _UpdateLatency();
 }
 
-void NeuralAmpModeler::OnIdle()
+void BassNAM::OnIdle()
 {
   mInputSender.TransmitData(*this);
   mOutputSender.TransmitData(*this);
@@ -471,7 +475,7 @@ void NeuralAmpModeler::OnIdle()
   }
 }
 
-bool NeuralAmpModeler::SerializeState(IByteChunk& chunk) const
+bool BassNAM::SerializeState(IByteChunk& chunk) const
 {
   // If this isn't here when unserializing, then we know we're dealing with something before v0.8.0.
   WDL_String header("###NeuralAmpModeler###"); // Don't change this!
@@ -486,7 +490,7 @@ bool NeuralAmpModeler::SerializeState(IByteChunk& chunk) const
   return SerializeParams(chunk);
 }
 
-int NeuralAmpModeler::UnserializeState(const IByteChunk& chunk, int startPos)
+int BassNAM::UnserializeState(const IByteChunk& chunk, int startPos)
 {
   // Look for the expected header. If it's there, then we'll know what to do.
   WDL_String header;
@@ -504,7 +508,7 @@ int NeuralAmpModeler::UnserializeState(const IByteChunk& chunk, int startPos)
   }
 }
 
-void NeuralAmpModeler::OnUIOpen()
+void BassNAM::OnUIOpen()
 {
   Plugin::OnUIOpen();
 
@@ -530,7 +534,7 @@ void NeuralAmpModeler::OnUIOpen()
   }
 }
 
-void NeuralAmpModeler::OnParamChange(int paramIdx)
+void BassNAM::OnParamChange(int paramIdx)
 {
   switch (paramIdx)
   {
@@ -553,7 +557,7 @@ void NeuralAmpModeler::OnParamChange(int paramIdx)
   }
 }
 
-void NeuralAmpModeler::OnParamChangeUI(int paramIdx, EParamSource source)
+void BassNAM::OnParamChangeUI(int paramIdx, EParamSource source)
 {
   if (auto pGraphics = GetUI())
   {
@@ -575,7 +579,7 @@ void NeuralAmpModeler::OnParamChangeUI(int paramIdx, EParamSource source)
   }
 }
 
-bool NeuralAmpModeler::OnMessage(int msgTag, int ctrlTag, int dataSize, const void* pData)
+bool BassNAM::OnMessage(int msgTag, int ctrlTag, int dataSize, const void* pData)
 {
   switch (msgTag)
   {
@@ -609,7 +613,7 @@ bool NeuralAmpModeler::OnMessage(int msgTag, int ctrlTag, int dataSize, const vo
 
 // Private methods ============================================================
 
-void NeuralAmpModeler::_AllocateIOPointers(const size_t nChans)
+void BassNAM::_AllocateIOPointers(const size_t nChans)
 {
   if (mInputPointers != nullptr)
     throw std::runtime_error("Tried to re-allocate mInputPointers without freeing");
@@ -623,7 +627,7 @@ void NeuralAmpModeler::_AllocateIOPointers(const size_t nChans)
     throw std::runtime_error("Failed to allocate pointer to output buffer!\n");
 }
 
-void NeuralAmpModeler::_ApplyDSPStaging()
+void BassNAM::_ApplyDSPStaging()
 {
   // Remove marked modules
   if (mShouldRemoveModel)
@@ -659,7 +663,7 @@ void NeuralAmpModeler::_ApplyDSPStaging()
   }
 }
 
-sample** NeuralAmpModeler::_BlendCleanAndProcessed(sample** inputs, const size_t nChansIn, sample** processed,
+sample** BassNAM::_BlendCleanAndProcessed(sample** inputs, const size_t nChansIn, sample** processed,
                                                    const size_t numChannels, const size_t numFrames)
 {
   const sample targetProcessedGain = static_cast<sample>(GetParam(kCleanBlend)->Value() / 100.0);
@@ -691,7 +695,7 @@ sample** NeuralAmpModeler::_BlendCleanAndProcessed(sample** inputs, const size_t
   return mOutputPointers;
 }
 
-void NeuralAmpModeler::_DeallocateIOPointers()
+void BassNAM::_DeallocateIOPointers()
 {
   if (mInputPointers != nullptr)
   {
@@ -709,7 +713,7 @@ void NeuralAmpModeler::_DeallocateIOPointers()
     throw std::runtime_error("Failed to deallocate pointer to output buffer!\n");
 }
 
-void NeuralAmpModeler::_FallbackDSP(iplug::sample** inputs, iplug::sample** outputs, const size_t numChannels,
+void BassNAM::_FallbackDSP(iplug::sample** inputs, iplug::sample** outputs, const size_t numChannels,
                                     const size_t numFrames)
 {
   for (auto c = 0; c < numChannels; c++)
@@ -717,7 +721,7 @@ void NeuralAmpModeler::_FallbackDSP(iplug::sample** inputs, iplug::sample** outp
       mOutputArray[c][s] = mInputArray[c][s];
 }
 
-void NeuralAmpModeler::_ResetModelAndIR(const double sampleRate, const int maxBlockSize)
+void BassNAM::_ResetModelAndIR(const double sampleRate, const int maxBlockSize)
 {
   // Model
   if (mStagedModel != nullptr)
@@ -750,7 +754,7 @@ void NeuralAmpModeler::_ResetModelAndIR(const double sampleRate, const int maxBl
   }
 }
 
-void NeuralAmpModeler::_SetInputGain()
+void BassNAM::_SetInputGain()
 {
   iplug::sample inputGainDB = GetParam(kInputLevel)->Value();
   mCleanInputGain = DBToAmp(inputGainDB);
@@ -762,7 +766,7 @@ void NeuralAmpModeler::_SetInputGain()
   mInputGain = DBToAmp(inputGainDB);
 }
 
-void NeuralAmpModeler::_SetOutputGain()
+void BassNAM::_SetOutputGain()
 {
   mOutputGain = DBToAmp(GetParam(kOutputLevel)->Value());
   double gainDB = 0.0;
@@ -794,7 +798,7 @@ void NeuralAmpModeler::_SetOutputGain()
   mModelOutputGain = DBToAmp(gainDB);
 }
 
-void NeuralAmpModeler::_ApplySlimParamToLoadedNAMs()
+void BassNAM::_ApplySlimParamToLoadedNAMs()
 {
   const double v = GetParam(kSlim)->Value();
   auto apply = [v](ResamplingNAM* p) {
@@ -807,7 +811,7 @@ void NeuralAmpModeler::_ApplySlimParamToLoadedNAMs()
   apply(mStagedModel.get());
 }
 
-std::string NeuralAmpModeler::_StageModel(const WDL_String& modelPath)
+std::string BassNAM::_StageModel(const WDL_String& modelPath)
 {
   WDL_String previousNAMPath = mNAMPath;
   try
@@ -852,7 +856,7 @@ std::string NeuralAmpModeler::_StageModel(const WDL_String& modelPath)
   return "";
 }
 
-dsp::wav::LoadReturnCode NeuralAmpModeler::_StageIR(const WDL_String& irPath)
+dsp::wav::LoadReturnCode BassNAM::_StageIR(const WDL_String& irPath)
 {
   // FIXME it'd be better for the path to be "staged" as well. Just in case the
   // path and the model got caught on opposite sides of the fence...
@@ -889,25 +893,25 @@ dsp::wav::LoadReturnCode NeuralAmpModeler::_StageIR(const WDL_String& irPath)
   return wavState;
 }
 
-size_t NeuralAmpModeler::_GetBufferNumChannels() const
+size_t BassNAM::_GetBufferNumChannels() const
 {
   // Assumes input=output (no mono->stereo effects)
   return mInputArray.size();
 }
 
-size_t NeuralAmpModeler::_GetBufferNumFrames() const
+size_t BassNAM::_GetBufferNumFrames() const
 {
   if (_GetBufferNumChannels() == 0)
     return 0;
   return mInputArray[0].size();
 }
 
-void NeuralAmpModeler::_InitToneStack()
+void BassNAM::_InitToneStack()
 {
   // If you want to customize the tone stack, then put it here!
   mToneStack = std::make_unique<dsp::tone_stack::BasicNamToneStack>();
 }
-void NeuralAmpModeler::_PrepareBuffers(const size_t numChannels, const size_t numFrames)
+void BassNAM::_PrepareBuffers(const size_t numChannels, const size_t numFrames)
 {
   const bool updateChannels = numChannels != _GetBufferNumChannels();
   const bool updateFrames = updateChannels || (_GetBufferNumFrames() != numFrames);
@@ -940,13 +944,13 @@ void NeuralAmpModeler::_PrepareBuffers(const size_t numChannels, const size_t nu
     mOutputPointers[c] = mOutputArray[c].data();
 }
 
-void NeuralAmpModeler::_PrepareIOPointers(const size_t numChannels)
+void BassNAM::_PrepareIOPointers(const size_t numChannels)
 {
   _DeallocateIOPointers();
   _AllocateIOPointers(numChannels);
 }
 
-void NeuralAmpModeler::_ProcessInput(iplug::sample** inputs, const size_t nFrames, const size_t nChansIn,
+void BassNAM::_ProcessInput(iplug::sample** inputs, const size_t nFrames, const size_t nChansIn,
                                      const size_t nChansOut)
 {
   // We'll assume that the main processing is mono for now. We'll handle dual amps later.
@@ -974,7 +978,7 @@ void NeuralAmpModeler::_ProcessInput(iplug::sample** inputs, const size_t nFrame
         mInputArray[0][s] += gain * inputs[c][s];
 }
 
-void NeuralAmpModeler::_ProcessOutput(iplug::sample** inputs, iplug::sample** outputs, const size_t nFrames,
+void BassNAM::_ProcessOutput(iplug::sample** inputs, iplug::sample** outputs, const size_t nFrames,
                                       const size_t nChansIn, const size_t nChansOut)
 {
   const double gain = mOutputGain;
@@ -993,7 +997,7 @@ void NeuralAmpModeler::_ProcessOutput(iplug::sample** inputs, iplug::sample** ou
 #endif
 }
 
-void NeuralAmpModeler::_UpdateControlsFromModel()
+void BassNAM::_UpdateControlsFromModel()
 {
   if (mModel == nullptr)
   {
@@ -1028,7 +1032,7 @@ void NeuralAmpModeler::_UpdateControlsFromModel()
   }
 }
 
-void NeuralAmpModeler::_UpdateLatency()
+void BassNAM::_UpdateLatency()
 {
   int latency = 0;
   if (mModel)
@@ -1053,7 +1057,7 @@ void NeuralAmpModeler::_UpdateLatency()
   }
 }
 
-void NeuralAmpModeler::_UpdateMeters(sample** inputPointer, sample** outputPointer, const size_t nFrames,
+void BassNAM::_UpdateMeters(sample** inputPointer, sample** outputPointer, const size_t nFrames,
                                      const size_t nChansIn, const size_t nChansOut)
 {
   // Right now, we didn't specify MAXNC when we initialized these, so it's 1.
