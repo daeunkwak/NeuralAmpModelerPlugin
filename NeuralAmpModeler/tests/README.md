@@ -1,5 +1,8 @@
 # Bass DSP checks
 
+Run the DSP, state, and macOS identity checks with `bash NeuralAmpModeler/scripts/test-bass.sh` from the
+repository root. For app builds and Scarlett setup, see [local testing](../LOCAL_TESTING.md).
+
 Before running the tests in a fresh clone, initialize the submodules from the
 repository root. The state compatibility test requires iPlug2 and the NAM Core
 dependencies:
