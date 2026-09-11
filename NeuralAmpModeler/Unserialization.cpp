@@ -20,7 +20,7 @@
 
 // Boilerplate
 
-void NeuralAmpModeler::_UnserializeApplyConfig(nlohmann::json& config)
+void BassNAM::_UnserializeApplyConfig(nlohmann::json& config)
 {
   auto getParamByName = [&](std::string& name) {
     // Could use a map but eh
@@ -319,7 +319,7 @@ private:
   int mPatch;
 };
 
-int NeuralAmpModeler::_UnserializeStateWithKnownVersion(const iplug::IByteChunk& chunk, int startPos)
+int BassNAM::_UnserializeStateWithKnownVersion(const iplug::IByteChunk& chunk, int startPos)
 {
   // We already got through the header before calling this.
   int pos = startPos;
@@ -364,7 +364,7 @@ int NeuralAmpModeler::_UnserializeStateWithKnownVersion(const iplug::IByteChunk&
   return pos;
 }
 
-int NeuralAmpModeler::_UnserializeStateWithUnknownVersion(const iplug::IByteChunk& chunk, int startPos)
+int BassNAM::_UnserializeStateWithUnknownVersion(const iplug::IByteChunk& chunk, int startPos)
 {
   nlohmann::json config;
   int pos = _GetConfigFrom_Earlier(chunk, startPos, config);

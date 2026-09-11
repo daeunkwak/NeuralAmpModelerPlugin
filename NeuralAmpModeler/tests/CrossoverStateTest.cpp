@@ -16,7 +16,7 @@ const bool kDefaultCalibrateInput = false;
 const std::string kInputCalibrationLevelParamName = "InputCalibrationLevel";
 const double kDefaultInputCalibrationLevel = 12.0;
 
-class NeuralAmpModeler
+class BassNAM
 {
 public:
   std::array<IParam, kNumParams> params;
@@ -30,7 +30,7 @@ public:
   int _UnserializeStateWithKnownVersion(const IByteChunk& chunk, int startPos);
   int _UnserializeStateWithUnknownVersion(const IByteChunk& chunk, int startPos);
 
-  NeuralAmpModeler()
+  BassNAM()
   {
     const char* names[] = {"Input",
                            "Threshold",
@@ -71,7 +71,7 @@ IByteChunk State(const char* version, int count)
 
 int main()
 {
-  NeuralAmpModeler plugin;
+  BassNAM plugin;
   auto current = State("0.8.2", 16);
   int pos = plugin._UnserializeStateWithKnownVersion(current, 0);
   assert(pos == current.Size());

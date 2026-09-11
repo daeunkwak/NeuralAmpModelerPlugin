@@ -1,18 +1,18 @@
-#define PLUG_NAME "NeuralAmpModeler"
-#define PLUG_MFR "Steven Atkinson"
+#define PLUG_NAME "BassNAM"
+#define PLUG_MFR "daeunkwak"
 #define PLUG_VERSION_HEX 0x00000802
 #define PLUG_VERSION_STR "0.8.2"
-#define PLUG_UNIQUE_ID '1YEo'
-#define PLUG_MFR_ID 'SDAa'
-#define PLUG_URL_STR "https://github.com/sdatkinson/NeuralAmpModelerPlugin"
-#define PLUG_EMAIL_STR "spam@me.com"
+#define PLUG_UNIQUE_ID 'BsN1'
+#define PLUG_MFR_ID 'Dkwk'
+#define PLUG_URL_STR "https://github.com/daeunkwak/NeuralAmpModelerPlugin"
+#define PLUG_EMAIL_STR ""
 #define PLUG_COPYRIGHT_STR "Copyright 2022 Steven Atkinson"
-#define PLUG_CLASS_NAME NeuralAmpModeler
-#define BUNDLE_NAME "NeuralAmpModeler"
-#define BUNDLE_MFR "StevenAtkinson"
+#define PLUG_CLASS_NAME BassNAM
+#define BUNDLE_NAME "BassNAM"
+#define BUNDLE_MFR "daeunkwak"
 #define BUNDLE_DOMAIN "com"
 
-#define SHARED_RESOURCES_SUBPATH "NeuralAmpModeler"
+#define SHARED_RESOURCES_SUBPATH "BassNAM"
 
 #ifdef APP_API
   #define PLUG_CHANNEL_IO "1-2"
@@ -35,16 +35,16 @@
 #define PLUG_MAX_WIDTH PLUG_WIDTH * 4
 #define PLUG_MAX_HEIGHT PLUG_HEIGHT * 4
 
-#define AUV2_ENTRY NeuralAmpModeler_Entry
-#define AUV2_ENTRY_STR "NeuralAmpModeler_Entry"
-#define AUV2_FACTORY NeuralAmpModeler_Factory
-#define AUV2_VIEW_CLASS NeuralAmpModeler_View
-#define AUV2_VIEW_CLASS_STR "NeuralAmpModeler_View"
+#define AUV2_ENTRY BassNAM_Entry
+#define AUV2_ENTRY_STR "BassNAM_Entry"
+#define AUV2_FACTORY BassNAM_Factory
+#define AUV2_VIEW_CLASS BassNAM_View
+#define AUV2_VIEW_CLASS_STR "BassNAM_View"
 
-#define AAX_TYPE_IDS 'ITP1'
-#define AAX_TYPE_IDS_AUDIOSUITE 'ITA1'
-#define AAX_PLUG_MFR_STR "Acme"
-#define AAX_PLUG_NAME_STR "NeuralAmpModeler\nIPEF"
+#define AAX_TYPE_IDS 'BsN1'
+#define AAX_TYPE_IDS_AUDIOSUITE 'BsA1'
+#define AAX_PLUG_MFR_STR "daeunkwak"
+#define AAX_PLUG_NAME_STR "BassNAM\nBNAM"
 #define AAX_PLUG_CATEGORY_STR "Effect"
 #define AAX_DOES_AUDIOSUITE 1
 

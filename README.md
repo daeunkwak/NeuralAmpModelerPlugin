@@ -1,4 +1,8 @@
-# Neural Amp Modeler Plug-in
+# BassNAM
+
+This fork is developed as **BassNAM**, with Clean Blend and a bass crossover.
+For the fork's macOS app/plugin builds, use the [local testing guide](NeuralAmpModeler/LOCAL_TESTING.md).
+The upstream project information below is retained for attribution and reference.
 
 [![Build](https://github.com/sdatkinson/NeuralAmpModelerPlugin/actions/workflows/build-native.yml/badge.svg)](https://github.com/sdatkinson/NeuralAmpModelerPlugin/actions/workflows/build-native.yml)
 

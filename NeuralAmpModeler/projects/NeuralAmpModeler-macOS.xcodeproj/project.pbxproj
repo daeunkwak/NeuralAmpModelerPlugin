@@ -2427,7 +2427,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ -d $APP_PATH/NeuralAmpModeler.app ]; then\n  pluginkit -a $APP_PATH/NeuralAmpModeler.app/Contents/PlugIns/NeuralAmpModeler.appex\n  echo \"Force register auv3\"\nelse\n  echo \"App path doesn't exist yet, cant force register auv3\"\nfi\n";
+			shellScript = "if [ -d \"$APP_PATH/$BINARY_NAME.app\" ]; then\n  pluginkit -a \"$APP_PATH/$BINARY_NAME.app/Contents/PlugIns/$BINARY_NAME.appex\"\n  echo \"Force register auv3\"\nelse\n  echo \"App path doesn't exist yet, cant force register auv3\"\nfi\n";
 		};
 		4F3EE1BD231438D000004786 /* Run Script - prepare_resources-mac.py */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2456,7 +2456,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = $SCRIPTS_PATH/clear_audiounit_caches.command;
+			shellScript = "if [ \"${BASSNAM_LOCAL_BUILD:-0}\" != 1 ]; then\n  \"$SCRIPTS_PATH/clear_audiounit_caches.command\"\nfi\n";
 		};
 		4F78BE3B22E74A7E00AD537E /* Run Script - Touch dummy file */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -3279,7 +3279,8 @@
 				MARKETING_VERSION = 0.5.7;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				OTHER_LDFLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.StevenAtkinson.app.NeuralAmpModeler.AUv3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.daeunkwak.app.BassNAM.AUv3;
+				PRODUCT_NAME = "$(BINARY_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -3327,7 +3328,8 @@
 				MARKETING_VERSION = 0.5.7;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_LDFLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.StevenAtkinson.app.NeuralAmpModeler.AUv3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.daeunkwak.app.BassNAM.AUv3;
+				PRODUCT_NAME = "$(BINARY_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -3373,7 +3375,8 @@
 				MARKETING_VERSION = 0.5.7;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_LDFLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.StevenAtkinson.app.NeuralAmpModeler.AUv3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.daeunkwak.app.BassNAM.AUv3;
+				PRODUCT_NAME = "$(BINARY_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -3404,7 +3407,7 @@
 					"$(inherited)",
 				);
 				OTHER_REZFLAGS = "-d ppc_$ppc -d i386_$i386 -I /System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Versions/A/Headers -I $CA_SDK/AudioUnits/AUPublic/AUBase";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.audiounit.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.audiounit.${BINARY_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REZ_SEARCH_PATHS = (
 					/System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Versions/A/Headers,
@@ -3438,7 +3441,7 @@
 					"$(inherited)",
 				);
 				OTHER_REZFLAGS = "-d ppc_$ppc -d i386_$i386 -I /System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Versions/A/Headers -I $CA_SDK/AudioUnits/AUPublic/AUBase";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.audiounit.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.audiounit.${BINARY_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REZ_SEARCH_PATHS = (
 					/System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Versions/A/Headers,
@@ -3472,7 +3475,7 @@
 					"$(inherited)",
 				);
 				OTHER_REZFLAGS = "-d ppc_$ppc -d i386_$i386 -I /System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Versions/A/Headers -I $CA_SDK/AudioUnits/AUPublic/AUBase";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.audiounit.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.audiounit.${BINARY_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REZ_SEARCH_PATHS = (
 					/System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Versions/A/Headers,
@@ -3508,7 +3511,8 @@
 					"$(APP_FRAMEWORKS)",
 					"$(inherited)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.app.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.app.${BINARY_NAME}";
+				PRODUCT_NAME = "$(BINARY_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = app;
@@ -3542,7 +3546,8 @@
 					"$(APP_FRAMEWORKS)",
 					"$(inherited)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.app.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.app.${BINARY_NAME}";
+				PRODUCT_NAME = "$(BINARY_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = app;
@@ -3574,7 +3579,8 @@
 					"$(APP_FRAMEWORKS)",
 					"$(inherited)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.app.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.app.${BINARY_NAME}";
+				PRODUCT_NAME = "$(BINARY_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = app;
@@ -3630,7 +3636,7 @@
 					"$(EXTRA_LNK_FLAGS)",
 					"$(ALL_FRAMEWORKS)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.StevenAtkinson.app.NeuralAmpModeler.AUv3Framework;
+				PRODUCT_BUNDLE_IDENTIFIER = com.daeunkwak.app.BassNAM.AUv3Framework;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
@@ -3692,7 +3698,7 @@
 					"$(EXTRA_LNK_FLAGS)",
 					"$(ALL_FRAMEWORKS)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.StevenAtkinson.app.NeuralAmpModeler.AUv3Framework;
+				PRODUCT_BUNDLE_IDENTIFIER = com.daeunkwak.app.BassNAM.AUv3Framework;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
@@ -3754,7 +3760,7 @@
 					"$(EXTRA_LNK_FLAGS)",
 					"$(ALL_FRAMEWORKS)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.StevenAtkinson.app.NeuralAmpModeler.AUv3Framework;
+				PRODUCT_BUNDLE_IDENTIFIER = com.daeunkwak.app.BassNAM.AUv3Framework;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
@@ -3816,7 +3822,7 @@
 				INFOPLIST_FILE = "../resources/NeuralAmpModeler-VST3-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 0.5.7;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.vst3.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.vst3.${BINARY_NAME}";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = vst3;
 			};
@@ -3844,7 +3850,7 @@
 				INFOPLIST_FILE = "../resources/NeuralAmpModeler-VST3-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 0.5.7;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.vst3.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.vst3.${BINARY_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = vst3;
@@ -3871,7 +3877,7 @@
 				INFOPLIST_FILE = "../resources/NeuralAmpModeler-VST3-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 0.5.7;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.vst3.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.vst3.${BINARY_NAME}";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = vst3;
 			};
@@ -3929,7 +3935,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 0.5.7;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.aax.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.aax.${BINARY_NAME}";
 				SDKROOT = "$(BASE_SDK_MAC)";
 				SKIP_INSTALL = NO;
 				SYMROOT = "../build-mac";
@@ -4006,7 +4012,7 @@
 					"-Xlinker",
 					1500,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.aax.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.aax.${BINARY_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = "$(BASE_SDK_MAC)";
 				SKIP_INSTALL = NO;
@@ -4082,7 +4088,7 @@
 					"-Xlinker",
 					1500,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.aax.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.aax.${BINARY_NAME}";
 				SDKROOT = "$(BASE_SDK_MAC)";
 				SKIP_INSTALL = NO;
 				SYMROOT = "../build-mac";
@@ -4226,7 +4232,7 @@
 					"$(APP_FRAMEWORKS)",
 					"$(inherited)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.app.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.app.${BINARY_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = app;
@@ -4261,7 +4267,7 @@
 					"$(APP_FRAMEWORKS)",
 					"$(inherited)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.app.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.app.${BINARY_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = app;
@@ -4296,7 +4302,7 @@
 					"$(APP_FRAMEWORKS)",
 					"$(inherited)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.app.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.app.${BINARY_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = app;
@@ -4321,7 +4327,7 @@
 				);
 				INFOPLIST_FILE = "../resources/NeuralAmpModeler-VST3-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.vst3.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.vst3.${BINARY_NAME}";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = vst3;
 			};
@@ -4347,7 +4353,7 @@
 				);
 				INFOPLIST_FILE = "../resources/NeuralAmpModeler-VST3-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.vst3.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.vst3.${BINARY_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = vst3;
@@ -4372,7 +4378,7 @@
 				);
 				INFOPLIST_FILE = "../resources/NeuralAmpModeler-VST3-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.StevenAtkinson.vst3.${BINARY_NAME}";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daeunkwak.vst3.${BINARY_NAME}";
 				SKIP_INSTALL = NO;
 				WRAPPER_EXTENSION = vst3;
 			};
